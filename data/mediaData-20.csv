@@ -1,0 +1,21 @@
+﻿#,moniker_name,domain,reliability_mean,reliability_label,bias_mean,bias_label
+1,Tangle,.readtangle.com,43.03508789,Reliable; Analysis/Fact Reporting,1.575758182,Middle
+2,Ed Source,.edsource.org,44.64706,Reliable; Analysis/Fact Reporting,-4.1583325,Middle
+3,Anti-Defamation League,.adl.org,44.244444,Reliable; Analysis/Fact Reporting,-4.986109167,Middle
+4,Human Events,.humanevents.com,20.66203625,Unreliable; Problematic,18.49656376,Hyper-Partisan Right
+5,Columbia Journalism Review,.cjr.org,43.32608739,Reliable; Analysis/Fact Reporting,-6.261666,Skews Left
+6,The Wichita Eagle,.kansas.com,44.73333333,Reliable; Analysis/Fact Reporting,-2.111111667,Middle
+7,Stockton Record,.recordnet.com,45.66666733,Reliable; Analysis/Fact Reporting,-0.644444667,Middle
+8,Providence Journal,.providencejournal.com,44.03921529,Reliable; Analysis/Fact Reporting,-2.716666,Middle
+9,Reno Gazette-Journal,.rgj.com,44.09259333,Reliable; Analysis/Fact Reporting,-4.055555417,Middle
+10,WIBC - Indy's Mobile News,.wibc.com,35.92857095,Generally Reliable/Analysis OR Other Issues,8.13440871,Skews Right
+11,Alabama Political Reporter,.alreporter.com,43.17777867,Reliable; Analysis/Fact Reporting,-0.7777775,Middle
+12,CNN (website),.cnn.com,42.12921337,Reliable; Analysis/Fact Reporting,-6.177956891,Skews Left
+13,Daily Nebraskan,.dailynebraskan.com,42.41666625,Reliable; Analysis/Fact Reporting,-7.144927391,Skews Left
+14,Fox News (website),.foxnews.com,35.37972049,Generally Reliable/Analysis OR Other Issues,11.0646057,Skews Right
+15,Vox,.vox.com,39.66090929,Generally Reliable/Analysis OR Other Issues,-10.01045771,Skews Left
+16,Politico,.politico.com,42.3656904,Reliable; Analysis/Fact Reporting,-5.33335379,Middle
+17,The Dispatch,.thedispatch.com,41.18703681,Reliable; Analysis/Fact Reporting,5.331707073,Middle
+18,Cape Cod Times,.capecodtimes.com,45,Reliable; Analysis/Fact Reporting,-0.687499375,Middle
+19,WSLS 10 - Roanoke,.wsls.com,46.37500062,Reliable; Analysis/Fact Reporting,-0.2708325,Middle
+20,The Fresno Bee,.fresnobee.com,46.03508737,Reliable; Analysis/Fact Reporting,-4.32,Middle

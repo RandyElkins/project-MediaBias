@@ -1,0 +1,8 @@
+﻿#,moniker_name,domain,reliability_mean,reliability_label,bias_mean,bias_label
+1,Tangle,.readtangle.com,43.03508789,Reliable; Analysis/Fact Reporting,1.575758182,Middle
+2,Ed Source,.edsource.org,44.64706,Reliable; Analysis/Fact Reporting,-4.1583325,Middle
+3,Anti-Defamation League,.adl.org,44.244444,Reliable; Analysis/Fact Reporting,-4.986109167,Middle
+4,Human Events,.humanevents.com,20.66203625,Unreliable; Problematic,18.49656376,Hyper-Partisan Right
+5,Columbia Journalism Review,.cjr.org,43.32608739,Reliable; Analysis/Fact Reporting,-6.261666,Skews Left
+6,The Wichita Eagle,.kansas.com,44.73333333,Reliable; Analysis/Fact Reporting,-2.111111667,Middle
+7,Stockton Record,.recordnet.com,45.66666733,Reliable; Analysis/Fact Reporting,-0.644444667,Middle

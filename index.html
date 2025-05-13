@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Sources Analysis Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f8f9fa;
+            --light-accent: #ecf0f1;
+            --dark-accent: #34495e;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --reliability-1-of-7: #63BE7B;
+            --reliability-2-of-7: #83C87D;
+            --reliability-3-of-7: #C1D981;
+            --reliability-4-of-7: #FFEB84;
+            --reliability-5-of-7: #FCBF7B;
+            --reliability-6-of-7: #FA9473;
+            --reliability-7-of-7: #F8696B;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--secondary-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            border-bottom: 1px solid var(--light-accent);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark-accent);
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        select,
+        input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background-color: var(--light-accent);
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .data-table th:hover {
+            background-color: #dde4e6;
+        }
+
+        .data-table th::after {
+            content: "";
+            display: inline-block;
+            margin-left: 5px;
+            width: 0;
+            height: 0;
+        }
+
+        .data-table th.sort-asc::after {
+            content: "▲";
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+
+        .data-table th.sort-desc::after {
+            content: "▼";
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+
+        .data-table tr:hover {
+            background-color: rgba(236, 240, 241, 0.5);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+
+        .file-upload {
+            margin-bottom: 20px;
+        }
+
+        .upload-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .upload-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Reliability color indicators */
+        .reliability-1st {
+            /* color: var(--success-color); */
+            color: var(--reliability-1-of-7);
+        }
+
+        .reliability-2nd {
+            color: var(--reliability-2-of-7);
+        }
+
+        .reliability-3rd {
+            color: var(--reliability-3-of-7);
+        }
+
+        .reliability-4th {
+            color: var(--reliability-4-of-7);
+        }
+
+        .reliability-5th {
+            color: var(--reliability-5-of-7);
+        }
+
+        .reliability-6th {
+            color: var(--reliability-6-of-7);
+        }
+
+        .reliability-7th {
+            color: var(--reliability-7-of-7);
+        }
+
+        /* Bias color indicators */
+        .bias-left {
+            color: #3498db;
+        }
+
+        .bias-middle {
+            color: #8e44ad;
+        }
+
+        .bias-right {
+            color: #e74c3c;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            flex: 1;
+            text-align: center;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin: 0 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+            margin-bottom: 60px;
+            /* Add space for the legend */
+        }
+
+        .color-legend {
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <h1>Media Sources Analysis Dashboard</h1>
+            <p>Explore reliability and bias data for various media sources</p>
+        </div>
+    </header>
+    <div id="error-messages" class="error-container" style="color: red; margin: 10px 0; display: none;"></div>
+    <div class="container">
+        <div class="file-upload card">
+            <div class="card-header">
+                <div class="card-title">Import Data</div>
+            </div>
+            <p>Upload your CSV file with media source data:</p>
+            <input type="file" id="csv-file" accept=".csv">
+            <button class="upload-btn" id="upload-btn">Upload and Process</button>
+        </div>
+        <div class="filters card">
+            <div class="card-header">
+                <div class="card-title">Filter Data</div>
+            </div>
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="bias-filter">Bias Category:</label>
+                    <select id="bias-filter">
+                        <option value="all">All Categories</option>
+                        <option value="Middle">Middle or Relatively Balanced Bias</option>
+                        <option value="Skews Left">Skews Left</option>
+                        <option value="Skews Right">Skews Right</option>
+                        <option value="Strong Left">Strong Left</option>
+                        <option value="Strong Right">Strong Right</option>
+                        <option value="Hyper-Partisan Left">Hyper-Partisan Left</option>
+                        <option value="Hyper-Partisan Right">Hyper-Partisan Right</option>
+                        <option value="Most Extreme Left">Most Extreme Left</option>
+                        <option value="Most Extreme Right">Most Extreme Right</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="reliability-filter">Reliability:</label>
+                    <select id="reliability-filter">
+                        <option value="all">All Reliability</option>
+                        <option value="Reliable; Fact Reporting">Reliable; Fact Reporting</option>
+                        <option value="Reliable; Analysis/Fact Reporting">Reliable; Analysis/Fact Reporting</option>
+                        <option value="Generally Reliable/Analysis OR Other Issues">Generally Reliable/Analysis OR Other
+                            Issues</option>
+                        <option value="Mixed Reliability/Opinion OR Other Issues">Mixed Reliability/Opinion OR Other
+                            Issues</option>
+                        <option value="Unreliable; Problematic">Unreliable; Problematic</option>
+                        <option value="Unreliable; Misleading">Unreliable; Misleading</option>
+                        <option value="Unreliable; Inaccurate">Unreliable; Inaccurate</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="search">Search:</label>
+                    <input type="text" id="search" placeholder="Search by name or domain...">
+                </div>
+            </div>
+        </div>
+        <div class="summary-stats">
+            <div class="stat-box">
+                <div class="stat-label">Total Sources</div>
+                <div class="stat-value" id="total-sources">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Average Reliability</div>
+                <div class="stat-value" id="avg-reliability">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Average Bias</div>
+                <div class="stat-value" id="avg-bias">0</div>
+            </div>
+        </div>
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Reliability vs. Bias Scatterplot</div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Reliability Threshold Settings</div>
+                    </div>
+                    <div style="padding: 10px; display: flex; align-items: center; gap: 10px;">
+                        <label for="reliability-percentile">Top X% Threshold:</label>
+                        <input type="range" id="reliability-percentile" min="1" max="100" value="20" />
+                        <input type="number" id="reliability-percentile-value" min="1" max="100" value="20"
+                            style="width: 60px;" />
+                        <label><input type="checkbox" id="toggle-background-shading" checked /> Enable Shading</label>
+                        <input type="color" id="threshold-line-color" value="#000000" title="Dashed Line Color" />
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="scatter-chart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Bias Distribution</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="bias-chart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Media Sources Table</div>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th data-sort="id">ID</th>
+                        <th data-sort="moniker_name">Name</th>
+                        <th data-sort="domain">Domain</th>
+                        <th data-sort="reliability_mean">Reliability Score</th>
+                        <th data-sort="reliability_label">Reliability Label</th>
+                        <th data-sort="bias_mean">Bias Score</th>
+                        <th data-sort="bias_label">Bias Label</th>
+                    </tr>
+                </thead>
+                <tbody id="data-table-body">
+                    <!-- Data rows will be populated here -->
+                </tbody>
+            </table>
+            <div class="pagination" id="pagination">
+                <!-- Pagination buttons will be added here -->
+            </div>
+        </div>
+    </div>
+    <script>
+        // Store data globally
+        let mediaSourcesData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 100; // Increased from 10 to 100 for better navigation with large datasets
+        // Sorting variables
+        let currentSortColumn = 'id';
+        let currentSortDirection = 'asc';
+        // Initialize charts
+        let scatterChart;
+        let biasChart;
+        // Threshold settings
+        let currentThresholdPercentile = 20; // Default to top 20%
+        let backgroundShadingEnabled = true;
+        let thresholdLineColor = '#000000';
+        // Sample data for testing
+        const sampleData = [
+            { id: 1, moniker_name: 'Tangle', domain: '.readtangle.com', reliability_mean: 43.03508789, reliability_label: 'Reliable; Analysis/Fact Reporting', bias_mean: 1.575758182, bias_label: 'Middle' },
+            { id: 2, moniker_name: 'Ed Source', domain: '.edsource.org', reliability_mean: 44.64706, reliability_label: 'Reliable; Analysis/Fact Reporting', bias_mean: -4.1583325, bias_label: 'Middle' },
+            { id: 3, moniker_name: 'Anti-Defamation League', domain: '.adl.org', reliability_mean: 44.244444, reliability_label: 'Reliable; Analysis/Fact Reporting', bias_mean: -4.986109167, bias_label: 'Middle' },
+            { id: 4, moniker_name: 'Human Events', domain: '.humanevents.com', reliability_mean: 20.66203625, reliability_label: 'Unreliable; Problematic', bias_mean: 18.49656376, bias_label: 'Hyper-Partisan Right' },
+            { id: 5, moniker_name: 'Columbia Journalism Review', domain: '.cjr.org', reliability_mean: 43.32608739, reliability_label: 'Reliable; Analysis/Fact Reporting', bias_mean: -6.261666, bias_label: 'Skews Left' }
+        ];
+        // Load sample data initially
+        window.addEventListener('DOMContentLoaded', () => {
+            mediaSourcesData = sampleData;
+            processData();
+            // Add event listeners to table headers for sorting
+            const tableHeaders = document.querySelectorAll('.data-table th[data-sort]');
+            tableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const column = header.getAttribute('data-sort');
+                    sortData(column);
+                });
+            });
+            // Add event listeners for threshold controls
+            document.getElementById('reliability-percentile').addEventListener('input', (e) => {
+                currentThresholdPercentile = parseInt(e.target.value);
+                document.getElementById('reliability-percentile-value').value = currentThresholdPercentile;
+                renderCharts();
+            });
+            document.getElementById('reliability-percentile-value').addEventListener('input', (e) => {
+                currentThresholdPercentile = Math.min(100, Math.max(1, parseInt(e.target.value) || 20));
+                document.getElementById('reliability-percentile').value = currentThresholdPercentile;
+                renderCharts();
+            });
+            document.getElementById('toggle-background-shading').addEventListener('change', (e) => {
+                backgroundShadingEnabled = e.target.checked;
+                renderCharts();
+            });
+            document.getElementById('threshold-line-color').addEventListener('input', (e) => {
+                thresholdLineColor = e.target.value;
+                renderCharts();
+            });
+        });
+        // Function to sort data
+        function sortData(column) {
+            // Toggle direction if clicking the same column
+            if (column === currentSortColumn) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+            // Update column header visual indicators
+            updateSortIndicators(column);
+            // Sort the filtered data
+            filteredData.sort((a, b) => {
+                let valueA = a[column];
+                let valueB = b[column];
+                // For string values, use case-insensitive comparison
+                if (typeof valueA === 'string' && typeof valueB === 'string') {
+                    valueA = valueA.toLowerCase();
+                    valueB = valueB.toLowerCase();
+                }
+                // For numeric values and bias/reliability
+                if (column === 'reliability_mean' || column === 'bias_mean' || column === 'id') {
+                    valueA = parseFloat(valueA) || 0;
+                    valueB = parseFloat(valueB) || 0;
+                }
+                // Sort direction
+                if (currentSortDirection === 'asc') {
+                    if (valueA < valueB) return -1;
+                    if (valueA > valueB) return 1;
+                    return 0;
+                } else {
+                    if (valueA > valueB) return -1;
+                    if (valueA < valueB) return 1;
+                    return 0;
+                }
+            });
+            // Reset to first page and render table
+            currentPage = 1;
+            renderTable();
+            updatePagination();
+        }
+        // Update sort indicators in table headers
+        function updateSortIndicators(column) {
+            const headers = document.querySelectorAll('.data-table th');
+            headers.forEach(header => {
+                // Clear all existing sort classes
+                header.classList.remove('sort-asc', 'sort-desc');
+                // Add appropriate class to current sort column
+                if (header.getAttribute('data-sort') === column) {
+                    header.classList.add(currentSortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+        document.getElementById('upload-btn').addEventListener('click', function () {
+            const fileInput = document.getElementById('csv-file');
+            const file = fileInput.files[0];
+            console.log("File selected:", file);
+            if (file) {
+                // Show loading indicator
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.id = 'loading-indicator';
+                loadingIndicator.style.position = 'fixed';
+                loadingIndicator.style.top = '50%';
+                loadingIndicator.style.left = '50%';
+                loadingIndicator.style.transform = 'translate(-50%, -50%)';
+                loadingIndicator.style.background = 'rgba(255, 255, 255, 0.9)';
+                loadingIndicator.style.padding = '20px';
+                loadingIndicator.style.borderRadius = '8px';
+                loadingIndicator.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+                loadingIndicator.style.zIndex = '1000';
+                loadingIndicator.innerHTML = '<p style="margin: 0; font-weight: bold;">Loading data, please wait...</p>';
+                document.body.appendChild(loadingIndicator);
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    delimitersToGuess: [',', '\t', '|', ';'],  // Handle different CSV formats
+                    error: function (error) {
+                        console.error('Error parsing CSV:', error);
+                        showError('Error parsing the CSV file: ' + error.message);
+                    },
+                    // Inside the Papa.parse complete function:
+                    complete: function (results) {
+                        try {
+                            // Remove loading indicator
+                            if (document.getElementById('loading-indicator')) {
+                                document.body.removeChild(document.getElementById('loading-indicator'));
+                            }
+                            // Debug logging
+                            console.log('CSV Parse Results:', results);
+                            // Check if results.data exists and is an array
+                            if (!results.data || !Array.isArray(results.data)) {
+                                console.error('Invalid CSV data structure:', results);
+                                showError('The CSV data structure is invalid. Check console for details.');
+                                return;
+                            }
+                            // Display header information to help debugging
+                            if (results.meta && results.meta.fields) {
+                                console.log('CSV Headers:', results.meta.fields);
+                            }
+                            // Process data directly without chunking to simplify and fix the error
+                            mediaSourcesData = results.data.map((row, index) => {
+                                // Handle null or undefined row
+                                if (!row) {
+                                    console.warn(`Skipping invalid row at index ${index}`);
+                                    return null;
+                                }
+                                // Clean column names by trimming whitespace
+                                const cleanRow = {};
+                                Object.keys(row).forEach(key => {
+                                    if (key) { // Ensure key is not null/undefined
+                                        cleanRow[key.trim()] = row[key];
+                                    }
+                                });
+                                // Handle various column naming conventions
+                                return {
+                                    id: cleanRow.id || cleanRow['#'] || cleanRow['ID'] || index + 1,
+                                    moniker_name: cleanRow.moniker_name || cleanRow['moniker_name'] || cleanRow['Moniker Name'] || cleanRow['name'] || cleanRow['Name'] || 'Unknown',
+                                    domain: cleanRow.domain || cleanRow['Domain'] || cleanRow['website'] || cleanRow['Website'] || cleanRow['url'] || cleanRow['URL'] || 'Unknown',
+                                    reliability_mean: parseFloat(cleanRow.reliability_mean || cleanRow['reliability_mean'] || cleanRow['Reliability Mean'] || cleanRow['reliability'] || cleanRow['Reliability'] || '0') || 0,
+                                    reliability_label: cleanRow.reliability_label || cleanRow['reliability_label'] || cleanRow['Reliability Label'] || cleanRow['reliability type'] || cleanRow['Reliability Type'] || 'Unknown',
+                                    bias_mean: parseFloat(cleanRow.bias_mean || cleanRow['bias_mean'] || cleanRow['Bias Mean'] || cleanRow['bias'] || cleanRow['Bias'] || '0') || 0,
+                                    bias_label: cleanRow.bias_label || cleanRow['bias_label'] || cleanRow['Bias Label'] || cleanRow['bias type'] || cleanRow['Bias Type'] || 'Unknown'
+                                };
+                            }).filter(item => item !== null); // Remove any null items
+                            console.log('Processed data:', mediaSourcesData);
+                            // Reset sorting to default
+                            currentSortColumn = 'id';
+                            currentSortDirection = 'asc';
+                            processData();
+                            console.log(`CSV data loaded successfully! ${mediaSourcesData.length} records imported.`);
+                        } catch (err) {
+                            console.error('Error processing CSV data:', err);
+                            showError('Error processing the data: ' + err.message);
+                        }
+                    }
+                });
+            } else {
+                showError('Please select a file first');
+            }
+        });
+        function processData() {
+            try {
+                console.log('Beginning data processing...');
+                applyFilters();
+                // Sort the data based on current sort settings
+                sortData(currentSortColumn);
+                renderTable();
+                updatePagination();
+                updateSummaryStats();
+                renderCharts();
+            } catch (error) {
+                console.error('Error in processData function:', error);
+                showError('Error processing data: ' + error.message);
+            }
+        }
+        function applyFilters() {
+            const biasFilter = document.getElementById('bias-filter').value;
+            const reliabilityFilter = document.getElementById('reliability-filter').value;
+            const searchTerm = document.getElementById('search').value.toLowerCase();
+            filteredData = mediaSourcesData.filter(source => {
+                const matchesBias = biasFilter === 'all' || (source.bias_label && source.bias_label.includes(biasFilter));
+                const matchesReliability = reliabilityFilter === 'all' || (source.reliability_label && source.reliability_label.includes(reliabilityFilter));
+                const matchesSearch = searchTerm === '' ||
+                    (typeof source.moniker_name === 'string' && source.moniker_name.toLowerCase().includes(searchTerm)) ||
+                    (typeof source.domain === 'string' && source.domain.toLowerCase().includes(searchTerm));
+                return matchesBias && matchesReliability && matchesSearch;
+            });
+            currentPage = 1; // Reset to first page when filters change
+        }
+        function renderTable() {
+            const tableBody = document.getElementById('data-table-body');
+            tableBody.innerHTML = '';
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const pageData = filteredData.slice(startIndex, endIndex);
+            pageData.forEach(source => {
+                const row = document.createElement('tr');
+                // Add reliability and bias classes for color coding
+                let reliabilityClass = '';
+                if (source.reliability_mean >= 48) {
+                    reliabilityClass = 'reliability-1st';
+                } else if (source.reliability_mean >= 40) {
+                    reliabilityClass = 'reliability-2nd';
+                } else if (source.reliability_mean >= 32) {
+                    reliabilityClass = 'reliability-3rd';
+                } else if (source.reliability_mean >= 24) {
+                    reliabilityClass = 'reliability-4th';
+                } else if (source.reliability_mean >= 16) {
+                    reliabilityClass = 'reliability-5th';
+                } else if (source.reliability_mean >= 8) {
+                    reliabilityClass = 'reliability-6th';
+                } else {
+                    reliabilityClass = 'reliability-7th';
+                }
+                let biasClass = '';
+                if (source.bias_label.includes('Left')) {
+                    biasClass = 'bias-left';
+                } else if (source.bias_label.includes('Middle')) {
+                    biasClass = 'bias-middle';
+                } else if (source.bias_label.includes('Right')) {
+                    biasClass = 'bias-right';
+                }
+                row.innerHTML = `
+<td>${source.id}</td>
+<td>${source.moniker_name}</td>
+<td>${source.domain}</td>
+<td class="${reliabilityClass}">${source.reliability_mean.toFixed(2)}</td>
+<td>${source.reliability_label}</td>
+<td class="${biasClass}">${source.bias_mean.toFixed(2)}</td>
+<td>${source.bias_label}</td>
+`;
+                tableBody.appendChild(row);
+            });
+        }
+        function updatePagination() {
+            const paginationElement = document.getElementById('pagination');
+            paginationElement.innerHTML = '';
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '← Previous';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                    updatePagination();
+                }
+            });
+            paginationElement.appendChild(prevBtn);
+            // Page numbers
+            const maxButtons = 5;
+            const startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            const endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.classList.toggle('active', i === currentPage);
+                pageBtn.addEventListener('click', () => {
+                    currentPage = i;
+                    renderTable();
+                    updatePagination();
+                });
+                paginationElement.appendChild(pageBtn);
+            }
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = 'Next →';
+            nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                    updatePagination();
+                }
+            });
+            paginationElement.appendChild(nextBtn);
+        }
+        function updateSummaryStats() {
+            document.getElementById('total-sources').textContent = filteredData.length;
+            if (filteredData.length > 0) {
+                const avgReliability = filteredData.reduce((sum, source) => sum + source.reliability_mean, 0) / filteredData.length;
+                const avgBias = filteredData.reduce((sum, source) => sum + source.bias_mean, 0) / filteredData.length;
+                document.getElementById('avg-reliability').textContent = avgReliability.toFixed(2);
+                document.getElementById('avg-bias').textContent = avgBias.toFixed(2);
+            } else {
+                document.getElementById('avg-reliability').textContent = 'N/A';
+                document.getElementById('avg-bias').textContent = 'N/A';
+            }
+        }
+        // Function to get colors for scatter plot points
+        function getScatterPointColors(data) {
+            return data.map(point => {
+                // Normalize bias from -40 to 40 to a value between -1 and 1
+                const normalizedBias = Math.max(-1, Math.min(1, point.x / 40));
+                // Normalize reliability from 0 to 50 to a value between 0 and 1
+                const normalizedReliability = Math.max(0, Math.min(1, point.y / 50));
+                // Calculate RGB values
+                // For bias: Blue (left) to White (center) to Red (right)
+                let r, g, b;
+                if (normalizedBias < 0) {
+                    // Left bias (blue to white)
+                    const intensity = -normalizedBias;
+                    r = Math.round(255 * (1 - intensity));
+                    g = Math.round(255 * (1 - intensity));
+                    b = 255;
+                } else {
+                    // Right bias (white to red)
+                    const intensity = normalizedBias;
+                    r = 255;
+                    g = Math.round(255 * (1 - intensity));
+                    b = Math.round(255 * (1 - intensity));
+                }
+                // Apply reliability as opacity and color intensity
+                // Higher reliability = more saturated and less transparent
+                const opacity = 0.3 + (normalizedReliability * 0.6); // 0.3 to 0.9
+                // Adjust intensity based on reliability (darker = more reliable)
+                const reliabilityFactor = 0.4 + (normalizedReliability * 0.6); // 0.4 to 1.0
+                r = Math.round(r * reliabilityFactor);
+                g = Math.round(g * reliabilityFactor);
+                b = Math.round(b * reliabilityFactor);
+                return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            });
+        }
+        // Function to get colors for bias chart
+        function getBiasColors(labels) {
+            return labels.map(label => {
+                // Enhanced color scheme to match scatterplot
+                if (label.includes('Most Extreme Left')) return 'rgba(0, 0, 180, 0.8)';
+                if (label.includes('Hyper-Partisan Left')) return 'rgba(30, 60, 220, 0.8)';
+                if (label.includes('Strong Left')) return 'rgba(65, 105, 225, 0.8)';
+                if (label.includes('Skews Left')) return 'rgba(100, 149, 237, 0.8)';
+                if (label.includes('Middle')) return 'rgba(180, 180, 180, 0.8)';
+                if (label.includes('Skews Right')) return 'rgba(255, 99, 71, 0.8)';
+                if (label.includes('Strong Right')) return 'rgba(220, 50, 50, 0.8)';
+                if (label.includes('Hyper-Partisan Right')) return 'rgba(200, 0, 0, 0.8)';
+                if (label.includes('Most Extreme Right')) return 'rgba(180, 0, 0, 0.8)';
+                return 'rgba(180, 180, 180, 0.8)'; // Default for unrecognized labels
+            });
+        }
+        // Add color legend to scatter plot
+        function addColorLegend(chartId, reliabilityThreshold) {
+            // Create legend container
+            const chartContainer = document.getElementById(chartId).parentNode;
+            // Remove any existing legend
+            const existingLegend = chartContainer.querySelector('.color-legend');
+            if (existingLegend) {
+                chartContainer.removeChild(existingLegend);
+            }
+            const legend = document.createElement('div');
+            legend.className = 'color-legend';
+            legend.style.display = 'flex';
+            legend.style.flexDirection = 'column';
+            legend.style.marginTop = '20px';
+            legend.style.padding = '10px';
+            legend.style.border = '1px solid #ddd';
+            legend.style.borderRadius = '4px';
+            legend.style.fontSize = '12px';
+            // Add title
+            const title = document.createElement('div');
+            title.textContent = 'Color Legend';
+            title.style.fontWeight = 'bold';
+            title.style.marginBottom = '10px';
+            legend.appendChild(title);
+            // Add threshold information if provided
+            if (reliabilityThreshold !== undefined) {
+                const thresholdInfo = document.createElement('div');
+                thresholdInfo.innerHTML = `<strong>Reliability Threshold (Top ${currentThresholdPercentile}%):</strong> ${reliabilityThreshold.toFixed(2)}`;
+                thresholdInfo.style.marginBottom = '10px';
+                thresholdInfo.style.padding = '5px';
+                thresholdInfo.style.backgroundColor = '#f8f9fa';
+                thresholdInfo.style.borderRadius = '3px';
+                legend.appendChild(thresholdInfo);
+                // Add shading explanation
+                const shadingInfo = document.createElement('div');
+                shadingInfo.style.display = 'flex';
+                shadingInfo.style.marginBottom = '10px';
+                const greenBox = document.createElement('div');
+                greenBox.style.width = '20px';
+                greenBox.style.height = '20px';
+                greenBox.style.backgroundColor = 'rgba(144, 238, 144, 0.2)';
+                greenBox.style.border = '1px solid #ddd';
+                greenBox.style.marginRight = '5px';
+                const greenText = document.createElement('div');
+                greenText.textContent = `More reliable (top ${currentThresholdPercentile}%)`;
+                shadingInfo.appendChild(greenBox);
+                shadingInfo.appendChild(greenText);
+                legend.appendChild(shadingInfo);
+                const redInfo = document.createElement('div');
+                redInfo.style.display = 'flex';
+                redInfo.style.marginBottom = '15px';
+                const redBox = document.createElement('div');
+                redBox.style.width = '20px';
+                redBox.style.height = '20px';
+                redBox.style.backgroundColor = 'rgba(255, 182, 193, 0.2)';
+                redBox.style.border = '1px solid #ddd';
+                redBox.style.marginRight = '5px';
+                const redText = document.createElement('div');
+                redText.textContent = `Less reliable (bottom ${100 - currentThresholdPercentile}%)`;
+                redInfo.appendChild(redBox);
+                redInfo.appendChild(redText);
+                legend.appendChild(redInfo);
+            }
+            // Add bias legend (horizontal gradient)
+            const biasLegend = document.createElement('div');
+            biasLegend.style.display = 'flex';
+            biasLegend.style.flexDirection = 'column';
+            biasLegend.style.marginBottom = '15px';
+            const biasTitle = document.createElement('div');
+            biasTitle.textContent = 'Bias Spectrum (Left to Right)';
+            biasTitle.style.marginBottom = '5px';
+            biasLegend.appendChild(biasTitle);
+            const biasGradient = document.createElement('div');
+            biasGradient.style.display = 'flex';
+            biasGradient.style.height = '20px';
+            biasGradient.style.width = '100%';
+            biasGradient.style.background = 'linear-gradient(to right, blue, white, red)';
+            biasGradient.style.borderRadius = '3px';
+            biasLegend.appendChild(biasGradient);
+            const biasLabels = document.createElement('div');
+            biasLabels.style.display = 'flex';
+            biasLabels.style.justifyContent = 'space-between';
+            biasLabels.style.marginTop = '2px';
+            const leftLabel = document.createElement('div');
+            leftLabel.textContent = 'Left';
+            biasLabels.appendChild(leftLabel);
+            const centerLabel = document.createElement('div');
+            centerLabel.textContent = 'Center';
+            biasLabels.appendChild(centerLabel);
+            const rightLabel = document.createElement('div');
+            rightLabel.textContent = 'Right';
+            biasLabels.appendChild(rightLabel);
+            biasLegend.appendChild(biasLabels);
+            legend.appendChild(biasLegend);
+            // Add reliability legend (vertical gradient)
+            const reliabilityLegend = document.createElement('div');
+            reliabilityLegend.style.display = 'flex';
+            reliabilityLegend.style.flexDirection = 'column';
+            const reliabilityTitle = document.createElement('div');
+            reliabilityTitle.textContent = 'Reliability (Opacity & Saturation)';
+            reliabilityTitle.style.marginBottom = '5px';
+            reliabilityLegend.appendChild(reliabilityTitle);
+            const reliabilityContainer = document.createElement('div');
+            reliabilityContainer.style.display = 'flex';
+            reliabilityContainer.style.alignItems = 'center';
+            const reliabilityGradient = document.createElement('div');
+            reliabilityGradient.style.height = '20px';
+            reliabilityGradient.style.width = '100%';
+            reliabilityGradient.style.background = 'linear-gradient(to right, rgba(128, 128, 128, 0.3), rgba(0, 0, 0, 0.9))';
+            reliabilityGradient.style.borderRadius = '3px';
+            reliabilityContainer.appendChild(reliabilityGradient);
+            const reliabilityLabels = document.createElement('div');
+            reliabilityLabels.style.display = 'flex';
+            reliabilityLabels.style.justifyContent = 'space-between';
+            reliabilityLabels.style.width = '100%';
+            reliabilityLabels.style.marginTop = '2px';
+            const lowLabel = document.createElement('div');
+            lowLabel.textContent = 'Less Reliable';
+            reliabilityLabels.appendChild(lowLabel);
+            const highLabel = document.createElement('div');
+            highLabel.textContent = 'More Reliable';
+            reliabilityLabels.appendChild(highLabel);
+            reliabilityContainer.appendChild(reliabilityGradient);
+            reliabilityLegend.appendChild(reliabilityContainer);
+            reliabilityLegend.appendChild(reliabilityLabels);
+            legend.appendChild(reliabilityLegend);
+            // Add legend to chart container
+            chartContainer.appendChild(legend);
+        }
+        // Create or update charts
+        function renderCharts() {
+            // For large datasets, limit the number of points in the scatter plot for performance
+            const maxPointsForScatter = 4000;
+            let dataForScatter = filteredData;
+            if (filteredData.length > maxPointsForScatter) {
+                // Sample the data if it's too large
+                const samplingRate = Math.floor(filteredData.length / maxPointsForScatter);
+                dataForScatter = filteredData.filter((_, index) => index % samplingRate === 0);
+                console.log(`Dataset too large (${filteredData.length} points). Sampled down to ${dataForScatter.length} points for scatter plot.`);
+            }
+            // Prepare data for scatter plot
+            const scatterData = dataForScatter.map(source => ({
+                x: source.bias_mean,
+                y: source.reliability_mean,
+                label: source.moniker_name
+            }));
+            // Calculate the threshold for top X% of reliability scores
+            const reliabilityValues = filteredData.map(source => source.reliability_mean).sort((a, b) => a - b);
+            const thresholdIndex = Math.floor(reliabilityValues.length * ((100 - currentThresholdPercentile) / 100));
+            const reliabilityThreshold = reliabilityValues[thresholdIndex] || 40; // Default to 40 if data is empty
+            console.log(`Calculated reliability threshold (top ${currentThresholdPercentile}%): ${reliabilityThreshold}`);
+            // Define the ordered bias categories
+            const biasOrder = [
+                "Most Extreme Left",
+                "Hyper-Partisan Left",
+                "Strong Left",
+                "Skews Left",
+                "Middle",
+                "Skews Right",
+                "Strong Right",
+                "Hyper-Partisan Right",
+                "Most Extreme Right"
+            ];
+            // Count bias categories for bar chart
+            const biasCategories = {};
+            biasOrder.forEach(category => {
+                biasCategories[category] = 0; // Initialize all categories with zero
+            });
+            // Count occurrences in filtered data
+            filteredData.forEach(source => {
+                if (biasCategories.hasOwnProperty(source.bias_label)) {
+                    biasCategories[source.bias_label]++;
+                } else {
+                    // Handle any categories that might not be in our predefined order
+                    console.warn(`Unexpected bias category: ${source.bias_label}`);
+                    biasCategories[source.bias_label] = 1;
+                }
+            });
+            // Optimize chart rendering by using animation:false for large datasets
+            const useAnimation = filteredData.length < 500;
+            // Create or update scatter chart
+            const scatterCtx = document.getElementById('scatter-chart').getContext('2d');
+            if (scatterChart) {
+                scatterChart.destroy();
+            }
+            scatterChart = new Chart(scatterCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Media Sources',
+                        data: scatterData,
+                        backgroundColor: getScatterPointColors(scatterData),
+                        pointRadius: 4,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    animation: useAnimation,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Bias Score (Negative = Left, Positive = Right)'
+                            },
+                            min: -40,
+                            max: 40
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Reliability Score (Higher = More Reliable)'
+                            },
+                            min: 0,
+                            max: 60
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const point = context.raw;
+                                    return `${point.label}: Reliability: ${point.y.toFixed(2)}, Bias: ${point.x.toFixed(2)}`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        // Add plugin for the background shading with dynamic threshold
+                        backgroundShading: {
+                            thresholdY: reliabilityThreshold,
+                            aboveColor: 'rgba(144, 238, 144, 0.2)', // Light green with transparency
+                            belowColor: 'rgba(255, 182, 193, 0.2)' // Light red with transparency
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'backgroundShading',
+                    afterDraw: (chart) => {
+                        if (!backgroundShadingEnabled) return;
+                        const ctx = chart.ctx;
+                        const chartArea = chart.chartArea;
+                        const yAxis = chart.scales.y;
+                        // Calculate the pixel position of the reliability threshold
+                        const thresholdY = chart.options.plugins.backgroundShading.thresholdY;
+                        const threshold = yAxis.getPixelForValue(thresholdY);
+                        // Draw the upper region (above threshold) - more reliable (green)
+                        ctx.fillStyle = chart.options.plugins.backgroundShading.aboveColor;
+                        ctx.fillRect(
+                            chartArea.left,
+                            chartArea.top,
+                            chartArea.width,
+                            threshold - chartArea.top
+                        );
+                        // Draw the lower region (below threshold) - less reliable (red)
+                        ctx.fillStyle = chart.options.plugins.backgroundShading.belowColor;
+                        ctx.fillRect(
+                            chartArea.left,
+                            threshold,
+                            chartArea.width,
+                            chartArea.bottom - threshold
+                        );
+                        // Draw a dashed line at the threshold
+                        ctx.beginPath();
+                        ctx.setLineDash([5, 5]);
+                        ctx.moveTo(chartArea.left, threshold);
+                        ctx.lineTo(chartArea.right, threshold);
+                        ctx.lineWidth = 1;
+                        ctx.strokeStyle = thresholdLineColor || 'rgba(0, 0, 0, 0.5)';
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                        // Text labels
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        ctx.font = 'bold 11px Segoe UI';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(
+                            `Top ${currentThresholdPercentile}% Threshold: ${thresholdY.toFixed(2)}`,
+                            chartArea.left + chartArea.width / 2,
+                            threshold - 20
+                        );
+                        ctx.fillText("More Reliable Sources", chartArea.left + chartArea.width / 2, threshold - 6);
+                        ctx.fillText("Less Reliable Sources", chartArea.left + chartArea.width / 2, threshold + 16);
+                    }
+                }]
+            });
+            // Add color legend to scatter plot
+            addColorLegend('scatter-chart', reliabilityThreshold);
+            // Create or update bias chart - now using ordered categories
+            const biasCtx = document.getElementById('bias-chart').getContext('2d');
+            if (biasChart) {
+                biasChart.destroy();
+            }
+            // Use the predefined order for labels
+            const biasLabels = biasOrder.filter(category => biasCategories[category] > 0 || Object.keys(biasCategories).includes(category));
+            const biasData = biasLabels.map(label => biasCategories[label] || 0);
+            biasChart = new Chart(biasCtx, {
+                type: 'bar',
+                data: {
+                    labels: biasLabels,
+                    datasets: [{
+                        label: 'Number of Sources',
+                        data: biasData,
+                        backgroundColor: getBiasColors(biasLabels)
+                    }]
+                },
+                options: {
+                    animation: useAnimation,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Sources'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Bias Category'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        // Add debounce function for better performance with large datasets
+        function debounce(func, wait) {
+            let timeout;
+            return function () {
+                const context = this;
+                const args = arguments;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(context, args);
+                }, wait);
+            };
+        }
+        // Add error message handling for better user experience
+        function showError(message) {
+            const errorDiv = document.getElementById('error-messages');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000); // Hide after 5 seconds
+        }
+        // Set up event listeners for filters and threshold controls (only once, outside of rendering functions)
+        document.addEventListener('DOMContentLoaded', () => {
+            // Filter event listeners
+            document.getElementById('bias-filter').addEventListener('change', processData);
+            document.getElementById('reliability-filter').addEventListener('change', processData);
+            document.getElementById('search').addEventListener('input', debounce(processData, 300));
+            // Threshold control event listeners
+            document.getElementById('reliability-percentile').addEventListener('input', (e) => {
+                currentThresholdPercentile = parseInt(e.target.value);
+                document.getElementById('reliability-percentile-value').value = currentThresholdPercentile;
+                renderCharts();
+            });
+            document.getElementById('reliability-percentile-value').addEventListener('input', (e) => {
+                currentThresholdPercentile = Math.min(100, Math.max(1, parseInt(e.target.value) || 20));
+                document.getElementById('reliability-percentile').value = currentThresholdPercentile;
+                renderCharts();
+            });
+            document.getElementById('toggle-background-shading').addEventListener('change', (e) => {
+                backgroundShadingEnabled = e.target.checked;
+                renderCharts();
+            });
+            document.getElementById('threshold-line-color').addEventListener('input', (e) => {
+                thresholdLineColor = e.target.value;
+                renderCharts();
+            });
+        });
+        // Event listeners for filters with debounce for better performance
+        document.getElementById('bias-filter').addEventListener('change', processData);
+        document.getElementById('reliability-filter').addEventListener('change', processData);
+        document.getElementById('search').addEventListener('input', debounce(processData, 300)); // Debounce search for better performance
+    </script>
+</body>
+
+</html>

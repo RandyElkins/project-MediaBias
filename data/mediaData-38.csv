@@ -1,0 +1,39 @@
+﻿#,moniker_name,domain,reliability_mean,reliability_label,bias_mean,bias_label
+2,Ed Source,.edsource.org,44.64706,Reliable; Analysis/Fact Reporting,-4.1583325,Middle
+4,Human Events,.humanevents.com,20.66203625,Unreliable; Problematic,18.49656376,Hyper-Partisan Right
+5,Columbia Journalism Review,.cjr.org,43.32608739,Reliable; Analysis/Fact Reporting,-6.261666,Skews Left
+10,WIBC - Indy's Mobile News,.wibc.com,35.92857095,Generally Reliable/Analysis OR Other Issues,8.13440871,Skews Right
+15,Vox,.vox.com,39.66090929,Generally Reliable/Analysis OR Other Issues,-10.01045771,Skews Left
+25,New Civil Rights Movement,.thenewcivilrightsmovement.com,31.5208325,Mixed Reliability/Opinion OR Other Issues,-10.1981977,Skews Left
+26,OutKick,.outkick.com,27.10062868,Mixed Reliability/Opinion OR Other Issues,13.93913104,Strong Right
+30,The Daily Signal,.dailysignal.com,20.15073877,Unreliable; Problematic,17.10304972,Strong Right
+32,RT Russia Today,.rt.com,28.66484889,Mixed Reliability/Opinion OR Other Issues,11.45680572,Skews Right
+49,Mother Jones,.motherjones.com,37.01693712,Generally Reliable/Analysis OR Other Issues,-15.05294618,Strong Left
+50,The Root,.theroot.com,26.47443432,Mixed Reliability/Opinion OR Other Issues,-18.47307481,Hyper-Partisan Left
+74,Reason,.reason.com,36.30562503,Generally Reliable/Analysis OR Other Issues,4.652046093,Middle
+78,InfoWars,.infowars.com,15.90059516,Unreliable; Misleading,23.45802543,Hyper-Partisan Right
+133,Daily Sound and Fury,.dailysoundandfury.com,16.46766269,Unreliable; Problematic,-13.77037089,Strong Left
+145,PoliticusUSA,.politicususa.com,30.81884087,Mixed Reliability/Opinion OR Other Issues,-16.23809537,Strong Left
+169,The Free Thought Project,.thefreethoughtproject.com,27.16129097,Mixed Reliability/Opinion OR Other Issues,-1.314175172,Middle
+180,Chicks On The Right,.chicksonright.com,24.66666552,Mixed Reliability/Opinion OR Other Issues,18.57692346,Hyper-Partisan Right
+191,Before It's News,.beforeitsnews.com,6.225736836,Unreliable; Inaccurate,29.40814566,Hyper-Partisan Right
+225,FAIR,.fair.org,32.59649053,Generally Reliable/Analysis OR Other Issues,-19.36204124,Hyper-Partisan Left
+236,RT: CrossTalk,.tv.crosstalk.adfontesmedia.com,16.17777767,Unreliable; Problematic,4.305554167,Middle
+259,Fox News: The Story with Martha MacCallum,.tv.thestorywithmarthamaccallum.adfontesmedia.com,34.733332,Generally Reliable/Analysis OR Other Issues,15.44444667,Strong Right
+262,Fox News: Fox News Live,.tv.foxnewslive.adfontesmedia.com,42.333334,Reliable; Analysis/Fact Reporting,11.738095,Skews Right
+270,ABC: This Week with George Stephanopoulos,.tv.abcthisweekwithgeorgestephanopoulos.adfontesmedia.com,19.0800024,Unreliable; Problematic,-7.8933332,Skews Left
+271,MSNBC: All In with Chris Hayes,.tv.msnbcallinwithchrishayes.adfontesmedia.com,22.40277625,Unreliable; Problematic,-18.43137118,Hyper-Partisan Left
+279,ABC: Nightline,.tv.nightline.adfontesmedia.com,48.5833325,Reliable; Fact Reporting,-4.333331429,Middle
+286,NBC: Early Today,.tv.nbcearlytoday.adfontesmedia.com,48.666665,Reliable; Fact Reporting,-6.190477143,Skews Left
+423,The New Yorker,.newyorker.com,40.90865359,Reliable; Analysis/Fact Reporting,-12.25207343,Strong Left
+530,InfoWars: The War Room with Owen Shroyer,.tv.warroomwithowenshroyer.adfontesmedia.com,7.266666667,Unreliable; Inaccurate,31.53333333,Most Extreme Right
+544,National Enquirer,.nationalenquirer.com,14.86308151,Unreliable; Misleading,2.063095714,Middle
+756,National Catholic Register,.ncregister.com,22.38541813,Unreliable; Problematic,11.81349214,Skews Right
+818,Pollution News,.pollution.news,13.49073931,Unreliable; Misleading,8.977011897,Skews Right
+873,The Mark Levin Show,.pod.themarklevinshow.adfontesmedia.com,10.84313824,Unreliable; Misleading,30.45238071,Most Extreme Right
+939,The Jimmy Dore Show,.pod.thejimmydoreshow.adfontesmedia.com,12.33333182,Unreliable; Misleading,-25.066666,Hyper-Partisan Left
+1001,Part of the Problem,.pod.partoftheproblem.adfontesmedia.com,11.8933332,Unreliable; Misleading,15.99999714,Strong Right
+1013,Amped Up with Ryan Knight,.pod.ampedupryanknight.adfontesmedia.com,16.916665,Unreliable; Problematic,-34.11111,Most Extreme Left
+1357,Al Jazeera: Witness,.tv.aljazeerawitness.adfontesmedia.com,51.933334,Reliable; Fact Reporting,-13.95555467,Strong Left
+2255,Revolutionary Left Radio,.pod.revolutionaryleftradio.adfontesmedia.com,10.38095,Unreliable; Misleading,-32.44444333,Most Extreme Left
+3947,Knock Down the House,.tv.knockdownthehouse.adfontesmedia.com,49.66667,Reliable; Fact Reporting,-25.16667,Hyper-Partisan Left
