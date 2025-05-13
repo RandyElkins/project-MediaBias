@@ -298,6 +298,79 @@
             border-radius: 4px;
             font-size: 12px;
         }
+
+        .combo-search {
+            display: flex;
+            position: relative;
+        }
+
+        .combo-search input {
+            flex: 1;
+            border-right: none;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .dropdown-wrapper {
+            position: relative;
+        }
+
+        .dropdown-toggle {
+            height: 100%;
+            padding: 8px 12px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-left: none;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            cursor: pointer;
+        }
+
+        .dropdown-toggle:hover {
+            background-color: #f5f5f5;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            width: 300px;
+            max-height: 400px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .dropdown-search {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .dropdown-content {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .show {
+            display: block;
+        }
+
+        .search-container {
+            position: relative;
+        }
     </style>
 </head>
 
@@ -353,9 +426,36 @@
                         <option value="Unreliable; Inaccurate">Unreliable; Inaccurate</option>
                     </select>
                 </div>
-                <div class="filter-group">
+                <!-- <div class="filter-group">
                     <label for="search">Search:</label>
                     <input type="text" id="search" placeholder="Search by name or domain...">
+                </div> -->
+                <div class="filter-group search-container">
+                    <label for="search">Search:</label>
+                    <div class="combo-search">
+                        <input type="text" id="search" placeholder="Search by name or domain..."
+                            list="source-suggestions">
+                        <datalist id="source-suggestions">
+                            <!-- Options will be populated dynamically -->
+                        </datalist>
+                        <div class="dropdown-wrapper">
+                            <button id="show-all-sources" class="dropdown-toggle">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z" />
+                                </svg>
+                            </button>
+                            <div id="sources-dropdown" class="dropdown-menu">
+                                <div class="dropdown-search">
+                                    <input type="text" id="dropdown-filter" placeholder="Filter sources...">
+                                </div>
+                                <div class="dropdown-content">
+                                    <!-- Sources will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1182,6 +1282,96 @@
         document.getElementById('bias-filter').addEventListener('change', processData);
         document.getElementById('reliability-filter').addEventListener('change', processData);
         document.getElementById('search').addEventListener('input', debounce(processData, 300)); // Debounce search for better performance
+
+        // Function to initialize the enhanced search component
+        function initializeEnhancedSearch() {
+            const searchInput = document.getElementById('search');
+            const dropdownToggle = document.getElementById('show-all-sources');
+            const sourcesDropdown = document.getElementById('sources-dropdown');
+            const dropdownFilter = document.getElementById('dropdown-filter');
+            const dropdownContent = document.querySelector('.dropdown-content');
+            const sourcesList = document.getElementById('source-suggestions');
+
+            // Function to populate the dropdown and datalist with sources
+            function populateSourceOptions() {
+                // Clear existing options
+                dropdownContent.innerHTML = '';
+                sourcesList.innerHTML = '';
+
+                // Get unique source names and sort them alphabetically
+                const uniqueSources = [...new Set(mediaSourcesData.map(source => source.moniker_name))].sort();
+
+                // Populate dropdown items
+                uniqueSources.forEach(sourceName => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item';
+                    item.textContent = sourceName;
+                    item.addEventListener('click', () => {
+                        searchInput.value = sourceName;
+                        sourcesDropdown.classList.remove('show');
+                        // Trigger search
+                        processData();
+                    });
+                    dropdownContent.appendChild(item);
+
+                    // Also add to datalist for autocomplete
+                    const option = document.createElement('option');
+                    option.value = sourceName;
+                    sourcesList.appendChild(option);
+                });
+            }
+
+            // Toggle dropdown visibility
+            dropdownToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                sourcesDropdown.classList.toggle('show');
+            });
+
+            // Filter dropdown items when typing in the dropdown filter
+            dropdownFilter.addEventListener('input', () => {
+                const filterValue = dropdownFilter.value.toLowerCase();
+                const items = dropdownContent.querySelectorAll('.dropdown-item');
+
+                items.forEach(item => {
+                    if (item.textContent.toLowerCase().includes(filterValue)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-container')) {
+                    sourcesDropdown.classList.remove('show');
+                }
+            });
+
+            // Initial population
+            populateSourceOptions();
+
+            // Re-populate when data changes
+            return populateSourceOptions;
+        }
+
+        // When data is loaded/processed, update the enhanced search options
+        document.addEventListener('DOMContentLoaded', () => {
+            const updateSearchOptions = initializeEnhancedSearch();
+
+            // Override the existing processData function to update search options
+            const originalProcessData = processData;
+            processData = function () {
+                originalProcessData();
+                updateSearchOptions();
+            };
+
+            // Update when file is uploaded
+            document.getElementById('upload-btn').addEventListener('click', () => {
+                setTimeout(updateSearchOptions, 1000); // Give time for data to load
+            });
+        });
+
     </script>
 </body>
 
