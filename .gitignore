@@ -1,3 +1,9 @@
+node_modules
+uploads
+index*.html
+!index.html
+media_sources.db
+
 # Logs
 logs
 *.log
